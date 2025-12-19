@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "826179683172",
+    "firebase_url": "https://ulingo-cf3ae-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "ulingo-cf3ae",
+    "storage_bucket": "ulingo-cf3ae.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:826179683172:android:f8bf4bb2f43f1d3c3e7071",
+        "android_client_info": {
+          "package_name": "com.example.ulingo"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC1H0zczHW5SvCsnm6f3--ZVXTAwhzt8JE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
