@@ -1,122 +1,278 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:ulingo/screens/welcome_page.dart';
+import 'screens/language_selection_screen.dart';
+import 'screens/dashboard_screen.dart';
+import 'screens/verify_email_page.dart';
+import 'screens/admin/admin_dashboard_screen.dart';
+import 'screens/admin/admin_verify_email_page.dart';
+import 'firebase_options.dart';
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  runApp(const ULingoApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class ULingoApp extends StatelessWidget {
+  const ULingoApp({Key? key}) : super(key: key);
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'U-Lingo',
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        primarySwatch: Colors.blue,
+        scaffoldBackgroundColor: Colors.white,
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Colors.blue,
+          foregroundColor: Colors.white,
+          elevation: 0,
+        ),
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const AuthWrapper(),
+      debugShowCheckedModeBanner: false,
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
-  }
+class AuthWrapper extends StatelessWidget {
+  const AuthWrapper({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
-    return Scaffold(
-      appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
+    return StreamBuilder<User?>(
+      stream: FirebaseAuth.instance.authStateChanges(),
+      builder: (context, snapshot) {
+        print('=== AUTH WRAPPER DEBUG ===');
+        print('Connection state: ${snapshot.connectionState}');
+        print('Has data: ${snapshot.hasData}');
+
+        // Show loading while checking auth state
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          print('State: WAITING');
+          return const Scaffold(
+            body: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 16),
+                  Text('Loading...'),
+                ],
+              ),
             ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+          );
+        }
+
+        // User is not logged in - show welcome screen
+        if (!snapshot.hasData) {
+          print('State: NO USER - Showing WelcomePage');
+          return const WelcomePage();
+        }
+
+        final user = snapshot.data!;
+        print('User ID: ${user.uid}');
+        print('User Email: ${user.email}');
+        print('Email Verified: ${user.emailVerified}');
+
+        // ============================================
+        // STEP 1: Check if email is verified
+        // ============================================
+        if (!user.emailVerified) {
+          print('State: EMAIL NOT VERIFIED');
+
+          // Check if this is an admin or student
+          return FutureBuilder<DocumentSnapshot>(
+            future: FirebaseFirestore.instance
+                .collection('admins')
+                .doc(user.uid)
+                .get(),
+            builder: (context, adminSnapshot) {
+              if (adminSnapshot.connectionState == ConnectionState.waiting) {
+                print('Admin check: WAITING');
+                return const Scaffold(
+                  body: Center(child: CircularProgressIndicator()),
+                );
+              }
+
+              final isAdmin = adminSnapshot.hasData && adminSnapshot.data!.exists;
+              print('Is Admin: $isAdmin');
+
+              if (isAdmin) {
+                print('→ Showing: AdminVerifyEmailPage');
+                return const AdminVerifyEmailPage();
+              } else {
+                print('→ Showing: VerifyEmailPage (Student)');
+                return const VerifyEmailPage();
+              }
+            },
+          );
+        }
+
+        // ============================================
+        // STEP 2: Email is verified - Check domain
+        // ============================================
+        print('State: EMAIL VERIFIED ✓');
+
+        if (!user.email!.endsWith('@siswa.unimas.my')) {
+          print('ERROR: INVALID DOMAIN - ${user.email}');
+          print('→ Showing: Invalid Domain Error Screen');
+
+          return Scaffold(
+            body: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.error_outline,
+                      size: 80,
+                      color: Colors.red,
+                    ),
+                    const SizedBox(height: 24),
+                    const Text(
+                      'Invalid Email Domain',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Only UNIMAS email addresses (@siswa.unimas.my) are allowed.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.grey[700],
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+                    ElevatedButton(
+                      onPressed: () async {
+                        await FirebaseAuth.instance.signOut();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 32,
+                          vertical: 16,
+                        ),
+                      ),
+                      child: const Text('Sign Out'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }
+
+        print('Domain valid: @siswa.unimas.my ✓');
+
+        // ============================================
+        // STEP 3: Check if user is ADMIN
+        // ============================================
+        print('Checking if user is admin...');
+
+        return FutureBuilder<DocumentSnapshot>(
+          future: FirebaseFirestore.instance
+              .collection('admins')
+              .doc(user.uid)
+              .get(),
+          builder: (context, adminSnapshot) {
+            if (adminSnapshot.connectionState == ConnectionState.waiting) {
+              print('Admin document check: WAITING');
+              return const Scaffold(
+                body: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      CircularProgressIndicator(),
+                      SizedBox(height: 16),
+                      Text('Checking account type...'),
+                    ],
+                  ),
+                ),
+              );
+            }
+
+            final adminExists = adminSnapshot.hasData && adminSnapshot.data!.exists;
+            print('Admin document exists: $adminExists');
+
+            if (adminExists) {
+              print('✓✓✓ USER IS ADMIN ✓✓✓');
+              print('Admin data: ${adminSnapshot.data!.data()}');
+              print('→ Showing: AdminDashboardScreen');
+              return const AdminDashboardScreen();
+            }
+
+            // ============================================
+            // STEP 4: Not admin - Check STUDENT profile
+            // ============================================
+            print('User is NOT admin - treating as student');
+            print('Checking student profile...');
+
+            return FutureBuilder<DocumentSnapshot>(
+              future: FirebaseFirestore.instance
+                  .collection('users')
+                  .doc(user.uid)
+                  .get(),
+              builder: (context, userSnapshot) {
+                if (userSnapshot.connectionState == ConnectionState.waiting) {
+                  print('User document check: WAITING');
+                  return const Scaffold(
+                    body: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          CircularProgressIndicator(),
+                          SizedBox(height: 16),
+                          Text('Loading profile...'),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+
+                final userExists = userSnapshot.hasData && userSnapshot.data!.exists;
+                print('User document exists: $userExists');
+
+                if (userExists) {
+                  final userData = userSnapshot.data!.data() as Map<String, dynamic>;
+                  print('User data: $userData');
+
+                  final hasLanguage = userData.containsKey('selectedLanguage') &&
+                      userData['selectedLanguage'] != null &&
+                      userData['selectedLanguage'].toString().isNotEmpty;
+                  print('Has selected language: $hasLanguage');
+                  print('Language value: ${userData['selectedLanguage']}');
+
+                  if (hasLanguage) {
+                    print('✓✓✓ STUDENT WITH LANGUAGE ✓✓✓');
+                    print('→ Showing: DashboardScreen');
+                    return const DashboardScreen();
+                  } else {
+                    print('Student has profile but NO language selected');
+                    print('→ Showing: LanguageSelectionScreen');
+                    return const LanguageSelectionScreen();
+                  }
+                } else {
+                  print('No user document found - First time login');
+                  print('✓✓✓ SHOWING LANGUAGE SELECTION ✓✓✓');
+                  print('→ Showing: LanguageSelectionScreen');
+                  return const LanguageSelectionScreen();
+                }
+              },
+            );
+          },
+        );
+      },
     );
   }
 }
