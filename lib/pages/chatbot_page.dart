@@ -17,13 +17,11 @@ class _ChatbotPageState extends State<ChatbotPage> {
   final Color creamColor = const Color(0xFFFFFDD0);
   final Color goldHighlight = const Color(0xFFFFF59D); // Light Yellow for highlights
 
-  // UPDATED: The message list now supports a 'highlighted' status
-  // Format: {"sender": "user"|"bot", "text": "...", "isHighlighted": "true"|"false"}
   List<Map<String, String>> messages = [];
   bool isTyping = false;
 
   Future<String> sendToDeepSeek(String userMessage) async {
-    const String apiKey = "sk-99e3e2ed4e1b4584a0b54bdc9daa60f5"; // Remember to secure this!
+    const String apiKey = "sk-99e3e2ed4e1b4584a0b54bdc9daa60f5";
     final url = Uri.parse("https://api.deepseek.com/chat/completions");
 
     try {

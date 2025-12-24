@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
 
 import 'pages/home_page.dart';
 import 'pages/signup_page.dart';
@@ -11,6 +12,11 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   try {
     await Firebase.initializeApp();
+    await FirebaseAppCheck.instance.activate(
+
+      androidProvider: AndroidProvider.debug,
+      appleProvider: AppleProvider.appAttest,
+    );
     print("✅ Firebase initialized successfully");
   } catch (e) {
     print("❌ Firebase initialization failed: $e");
@@ -39,14 +45,9 @@ class MyApp extends StatelessWidget {
         ),
       ),
 
-      // 1. THIS IS THE KEY CHANGE:
-      // We removed 'initialRoute: /'
-      // We let 'home' decide where to go start.
       home: const AuthGate(),
 
       routes: {
-        // 2. We REMOVED the '/' route from here.
-        // If you keep '/' => HomePage(), it breaks the logic.
         '/home': (_) => const HomePage(),
         '/signup': (_) => const SignUpPage(),
         '/login': (_) => const LoginPage(),

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_database/firebase_database.dart'; // <--- CHANGED IMPORT
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/lesson_model.dart';
 
 class RoadmapPage extends StatelessWidget {
@@ -14,10 +14,10 @@ class RoadmapPage extends StatelessWidget {
         automaticallyImplyLeading: false,
       ),
 
-      // LISTEN TO REALTIME DATABASE
-      body: StreamBuilder<DatabaseEvent>(
-        // Listen to the "lessons" node in the JSON tree
-        stream: FirebaseDatabase.instance.ref('lessons').onValue,
+      // LISTEN TO FIRESTORE COLLECTION
+      body: StreamBuilder<QuerySnapshot>(
+        // Listen to the "lessons" collection
+        stream: FirebaseFirestore.instance.collection('lessons').snapshots(),
 
         builder: (context, snapshot) {
           // 1. Loading
@@ -30,26 +30,21 @@ class RoadmapPage extends StatelessWidget {
             return Center(child: Text("Error: ${snapshot.error}"));
           }
 
-          // 3. No Data (Empty or doesn't exist yet)
-          if (!snapshot.hasData || snapshot.data!.snapshot.value == null) {
+          // 3. No Data
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
             return const Center(child: Text("No lessons uploaded by Admin yet."));
           }
 
-          // 4. Data Found! Process the JSON Map.
-          // Realtime DB returns a Map<dynamic, dynamic>, not a List.
-          final data = snapshot.data!.snapshot.value as Map<dynamic, dynamic>;
-
-          // Convert the Map values into a List of Lessons
+          // 4. Data Found! Process the Documents.
           final List<Lesson> lessonList = [];
 
-          data.forEach((key, value) {
-            final lessonData = Map<String, dynamic>.from(value);
+          for (var doc in snapshot.data!.docs) {
+            final data = doc.data() as Map<String, dynamic>;
 
             // Handle Materials List safely
             List<Map<String, String>> materials = [];
-            if (lessonData['materials'] != null) {
-              // Realtime DB stores lists as Lists of Objects
-              final rawList = lessonData['materials'] as List<dynamic>;
+            if (data['materials'] != null) {
+              final rawList = data['materials'] as List<dynamic>;
               for (var item in rawList) {
                 materials.add({
                   "type": item['type'] ?? 'pdf',
@@ -60,15 +55,15 @@ class RoadmapPage extends StatelessWidget {
             }
 
             lessonList.add(Lesson(
-              lessonId: lessonData['lessonId'] ?? key,
-              lessonTitle: lessonData['lessonTitle'] ?? 'Untitled',
-              associatedSyllabusUnit: lessonData['associatedSyllabusUnit'] ?? '',
-              isLocked: lessonData['isLocked'] ?? true,
+              lessonId: data['lessonId'] ?? doc.id,
+              lessonTitle: data['lessonTitle'] ?? 'Untitled',
+              associatedSyllabusUnit: data['associatedSyllabusUnit'] ?? '',
+              isLocked: data['isLocked'] ?? true, // Firestore boolean
               materials: materials,
             ));
-          });
+          }
 
-          // Sort by Lesson ID (so Lesson 1 comes before Lesson 2)
+          // Sort by Lesson ID (e.g., "L01", "L02")
           lessonList.sort((a, b) => a.lessonId.compareTo(b.lessonId));
 
           return ListView.builder(
@@ -83,7 +78,7 @@ class RoadmapPage extends StatelessWidget {
     );
   }
 
-  // Same UI Widget as before
+  // (This Widget stays exactly the same)
   Widget _buildExpandableLessonCard(BuildContext context, Lesson lesson) {
     final bool isLocked = lesson.isLocked;
 
@@ -115,14 +110,14 @@ class RoadmapPage extends StatelessWidget {
             ),
           ...lesson.materials.map((file) {
             return ListTile(
-              leading: Icon(Icons.description, color: Color(0xFFFF7F50)),
+              leading: const Icon(Icons.description, color: Color(0xFFFF7F50)),
               title: Text(file['title']!),
               trailing: const Icon(Icons.download),
               onTap: () {
                 // Open File Logic
               },
             );
-          }).toList(),
+          }).toList(), // Removed unnecessary .toList() check
         ],
       ),
     );

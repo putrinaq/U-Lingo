@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart'; // <--- 1. IMPORT FIREBASE
+import 'package:firebase_auth/firebase_auth.dart';
 import 'dashboard_page.dart';
 import 'signup_page.dart';
 
@@ -33,7 +33,7 @@ class _LoginPageState extends State<LoginPage> {
         password: passwordController.text.trim(),
       );
 
-      // ✅ FIX: This line removes the Login Page so the AuthGate can show the Dashboard
+      //  This line removes the Login Page so the AuthGate can show the Dashboard
       if (mounted) {
         Navigator.of(context).popUntil((route) => route.isFirst);
       }
@@ -51,7 +51,7 @@ class _LoginPageState extends State<LoginPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(message), backgroundColor: Colors.red),
       );
-    } catch (e) { // ✅ FIX: Corrected syntax here (removed the typo)
+    } catch (e) { // Corrected syntax here (removed the typo)
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Error: $e"), backgroundColor: Colors.red),
       );

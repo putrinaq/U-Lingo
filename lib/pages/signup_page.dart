@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_database/firebase_database.dart';
 import 'login_page.dart';
 import '../models/user_model.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -28,55 +28,42 @@ class _SignUpPageState extends State<SignUpPage> {
     setState(() => _isLoading = true);
 
     try {
-      // 1. Register in Firebase Auth (Handles 'userPassword' securely)
+      // 1. Create User in Auth
       UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: userEmailController.text.trim(),
         password: userPasswordController.text.trim(),
       );
 
-
-      // 2. Save to Database using CLASS DIAGRAM attributes
       String uid = userCredential.user!.uid;
 
-      UserModel newUser = UserModel(
-        userId: uid,
-        userName: userNameController.text.trim(),
-        userEmail: userEmailController.text.trim(),
-      );
-      DatabaseReference ref = FirebaseDatabase.instance.ref("users/$uid");
-      await ref.set(newUser.toMap());
-
-      // ✅ STRICT ALIGNMENT WITH DIAGRAM:
-      await ref.set({
+      await FirebaseFirestore.instance.collection('users').doc(uid).set({
         "userId": uid,
         "userName": userNameController.text.trim(),
         "userEmail": userEmailController.text.trim(),
-        "streakCount": 0,             // Default integer
-        "selectedLanguages": ["English"], // Default List
-        "userPreferences": null       // Default null
+        "streakCount": 0,
+        "lessonsCompleted": 0,
+        "selectedLanguages": ["English"],
+        "profileImageUrl": null,
+        "createdAt": FieldValue.serverTimestamp(),
       });
 
-      // 3. Success
+      // 3. Success - Close the Page
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Account Created! Logging you in..."), backgroundColor: Colors.green),
+          const SnackBar(content: Text("Account Created!"), backgroundColor: Colors.green),
         );
         Navigator.popUntil(context, (route) => route.isFirst);
       }
 
     } on FirebaseAuthException catch (e) {
-      String message = "Registration failed";
-      if (e.code == 'email-already-in-use') {
-        message = "This email is already registered.";
-      } else if (e.code == 'weak-password') {
-        message = "Password is too weak.";
-      }
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message), backgroundColor: Colors.red),
+        SnackBar(content: Text("Auth Error: ${e.message}"), backgroundColor: Colors.red),
       );
     } catch (e) {
+      // IF YOU SEE THIS RED BAR, IT MEANS DATABASE PERMISSIONS ARE WRONG
+      print("Database Error: $e");
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error: $e"), backgroundColor: Colors.red),
+        SnackBar(content: Text("Database Error: $e"), backgroundColor: Colors.red),
       );
     } finally {
       if (mounted) setState(() => _isLoading = false);

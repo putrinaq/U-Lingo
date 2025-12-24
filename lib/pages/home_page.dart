@@ -23,17 +23,8 @@ class HomePage extends StatelessWidget {
               ),
 
               const SizedBox(height: 32),
-
-              Text(
-                "U-Lingo",
-                style: TextStyle(
-                  fontSize: 40,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF333333),
-                ),
-              ),
-
               const Text("U-Lingo",
+
                 style: TextStyle(
                     fontSize:40,
                   fontWeight: FontWeight.bold,
@@ -41,9 +32,7 @@ class HomePage extends StatelessWidget {
                 ),
               ),
 
-
               const SizedBox(height: 60),
-
 
               _button(context, "Create Account", Icons.person_add, '/signup'),
               const SizedBox(height: 16),
@@ -55,7 +44,6 @@ class HomePage extends StatelessWidget {
       ),
     );
   }
-
 
   Widget _button(
       BuildContext context,

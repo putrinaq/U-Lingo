@@ -5,9 +5,8 @@ class UserModel {
   final String userName;
   final String userEmail;
   final int streakCount;
-
-  // ✅ Keep it as a List to match your Class Diagram
-  // But we will strictly enforce it contains only Mandarin for now.
+  final int lessonsCompleted;
+  final String? profileImageUrl;
   final List<String> selectedLanguages;
 
   // userPreferences can remain null for now
@@ -18,7 +17,8 @@ class UserModel {
     required this.userName,
     required this.userEmail,
     this.streakCount = 0,
-    // ✅ DEFAULT VALUE IS MANDARIN
+    this.lessonsCompleted = 0,
+    this.profileImageUrl,
     this.selectedLanguages = const ['Mandarin'],
     this.userPreferences,
   });
@@ -29,6 +29,8 @@ class UserModel {
       'userName': userName,
       'userEmail': userEmail,
       'streakCount': streakCount,
+      'lessonsCompleted': lessonsCompleted,
+      'profileImageUrl': profileImageUrl,
       'selectedLanguages': selectedLanguages,
       'userPreferences': userPreferences,
     };
@@ -40,7 +42,8 @@ class UserModel {
       userName: map['userName'] ?? '',
       userEmail: map['userEmail'] ?? '',
       streakCount: map['streakCount']?.toInt() ?? 0,
-      // Handle the list conversion safely
+      lessonsCompleted: map['lessonsCompleted']?.toInt() ?? 0,
+      profileImageUrl: map['profileImageUrl'],
       selectedLanguages: List<String>.from(map['selectedLanguages'] ?? ['Mandarin']),
       userPreferences: map['userPreferences'],
     );
